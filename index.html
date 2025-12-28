@@ -309,10 +309,11 @@ h1 {
 <div id="overlay"></div>
 
 <script>
-  // --- Launcher Logic: Show Intro on First Visit ---
+  // --- Launcher Logic: Sequence Intro -> Login -> Welcome -> Dashboard ---
   const urlParams = new URLSearchParams(window.location.search);
-  // If the user hasn't seen the intro this session AND isn't coming back FROM the intro
-  if (!sessionStorage.getItem('introSeen') && !urlParams.has('fromIntro')) {
+  
+  // If user hits index.html directly without finishing the onboarding flow
+  if (!sessionStorage.getItem('introSeen') && !urlParams.has('onboarded')) {
     sessionStorage.setItem('introSeen', 'true');
     window.location.href = 'intro.html';
   }
@@ -325,149 +326,139 @@ h1 {
   }
 
   // Quick panel open/close logic
-const quickBtn = document.getElementById("quickMenuBtn");
-const quickPanel = document.getElementById("quickPanel");
-const closeQuick = document.getElementById("closeQuick");
-const overlay = document.getElementById("overlay");
+  const quickBtn = document.getElementById("quickMenuBtn");
+  const quickPanel = document.getElementById("quickPanel");
+  const closeQuick = document.getElementById("closeQuick");
+  const overlay = document.getElementById("overlay");
 
-quickBtn.addEventListener("click", () => {
-  quickPanel.classList.add("open");
-  overlay.classList.add("show");
-});
-closeQuick.addEventListener("click", () => {
-  quickPanel.classList.remove("open");
-  overlay.classList.remove("show");
-});
-overlay.addEventListener("click", () => {
-  quickPanel.classList.remove("open");
-  overlay.classList.remove("show");
-});
-
-// ---------- Helpers ----------
-function parseStoredTimetable(key) {
-  const raw = localStorage.getItem(key);
-  if (!raw) return null;
-  try {
-    const data = JSON.parse(raw);
-    if (Array.isArray(data) && data.every(r => Array.isArray(r))) return { type: 'table-rows', data };
-    if (typeof data === 'object') return { type: 'object', data };
-    return { type: 'raw', data };
-  } catch (e) { return { type: 'raw', data: raw }; }
-}
-
-function getWeekOfMonth(date) {
-  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const day = d.getDate();
-  const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
-  const firstDayIndex = (firstDay.getDay() + 6) % 7;
-  const adjusted = day + firstDayIndex;
-  return Math.min(Math.floor((adjusted - 1) / 7) + 1, 4);
-}
-
-// Load today's schedule
-function loadTodaySchedule() {
-  const scheduleList = document.getElementById('scheduleList');
-  scheduleList.innerHTML = '';
-  const now = new Date();
-  const day = now.getDay();
-  if (day >=1 && day <=5) {
-    const parsed = parseStoredTimetable('timetable_weekdays');
-    if (!parsed) { scheduleList.innerHTML = '<li>No schedule found for today.</li>'; return; }
-    if (parsed.type === 'table-rows') {
-      const rows = parsed.data;
-      const header = rows[0] || [];
-      const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-      let colIndex = header.findIndex(h => String(h).trim().toLowerCase() === dayNames[day].toLowerCase());
-      if (colIndex === -1) colIndex = Math.min(header.length-1, day);
-      let any=false;
-      for(let i=1;i<rows.length;i++){
-        const time = rows[i][0]||'';
-        const subj = rows[i][colIndex]||'';
-        if((subj||'').trim()!==''){ any=true; const li=document.createElement('li'); li.textContent=(time?time+': ':'')+subj; scheduleList.appendChild(li);}
-      }
-      if(!any)scheduleList.innerHTML='<li>No schedule found for today.</li>';
-      return;
-    }
-    scheduleList.innerHTML='<li>No schedule found for today.</li>'; return;
-  }
-  scheduleList.innerHTML='<li>No schedule found for today.</li>';
-}
-
-// Upcoming deadlines & progress
-function getNextBacklog(subject){
-  const arr=JSON.parse(localStorage.getItem(subject+'BacklogData'))||[];
-  return arr.find(r=>{ try{return String(r[1]).toLowerCase()!=='yes';}catch(e){return false;} });
-}
-
-function loadUpcomingDeadlines(){
-  document.getElementById('nextScience').textContent=getNextBacklog('science')?.[0]||'All completed!';
-  document.getElementById('nextMaths').textContent=getNextBacklog('maths')?.[0]||'All completed!';
-  document.getElementById('nextSSC').textContent=getNextBacklog('ssc')?.[0]||'All completed!';
-}
-
-function calculateProgress(){
-  const subjects=['science','maths','ssc'];
-  let completed=0,total=0;
-  subjects.forEach(sub=>{
-    const data=JSON.parse(localStorage.getItem(sub+'BacklogData'))||[];
-    data.forEach(r=>{ total++; try{ if(String(r[1]).toLowerCase()==='yes')completed++;}catch(e){}});
+  quickBtn.addEventListener("click", () => {
+    quickPanel.classList.add("open");
+    overlay.classList.add("show");
   });
-  const percent = total===0?0:Math.round((completed/total)*100);
-  document.getElementById('progressBar').style.width=percent+'%';
-  document.getElementById('progressText').textContent=percent+'%';
-}
+  closeQuick.addEventListener("click", () => {
+    quickPanel.classList.remove("open");
+    overlay.classList.remove("show");
+  });
+  overlay.addEventListener("click", () => {
+    quickPanel.classList.remove("open");
+    overlay.classList.remove("show");
+  });
 
-// Full Week modal
-function openFullWeekModal(){ 
-  document.getElementById('fullWeekModal').style.display='block';
-  populateFullWeek();
-}
-function closeFullWeekModal(){ 
-  document.getElementById('fullWeekModal').style.display='none';
-}
-
-// Build full week table
-function populateFullWeek(){
-  const body=document.getElementById('fullWeekBody');
-  body.innerHTML='<p style="opacity:0.8;">Loading schedule...</p>';
-  const weekdaysParsed=parseStoredTimetable('timetable_weekdays');
-  const satParsed=parseStoredTimetable('timetable_saturday');
-  const sunParsed=parseStoredTimetable('timetable_sunday');
-
-  function rowsToDayMapping(parsed,dayNamesMap){
-    const mapping={}; if(!parsed) return mapping;
-    if(parsed.type==='table-rows'){ const rows=parsed.data; const header=rows[0]||[];
-      for(let col=1;col<header.length;col++){ const dayLabel=(dayNamesMap && dayNamesMap[col-1])?dayNamesMap[col-1]:header[col]||('Col '+col); mapping[dayLabel]=mapping[dayLabel]||[]; for(let r=1;r<rows.length;r++){ const time=rows[r][0]||''; const subj=rows[r][col]||''; if((subj||'').trim()!=='') mapping[dayLabel].push([time,subj]);}}
-      return mapping;}
-    if(parsed.type==='object'){ Object.keys(parsed.data).forEach(k=>{const val=parsed.data[k]; if(Array.isArray(val)) mapping[k]=val.map(x=>Array.isArray(x)?x:['',x]);}); return mapping;}
-    return mapping;
+  // ---------- Helpers ----------
+  function parseStoredTimetable(key) {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    try {
+      const data = JSON.parse(raw);
+      if (Array.isArray(data) && data.every(r => Array.isArray(r))) return { type: 'table-rows', data };
+      if (typeof data === 'object') return { type: 'object', data };
+      return { type: 'raw', data };
+    } catch (e) { return { type: 'raw', data: raw }; }
   }
 
-  const weekdaysMap=rowsToDayMapping(weekdaysParsed,['Monday','Tuesday','Wednesday','Thursday','Friday']);
-  const satMap=rowsToDayMapping(satParsed,['Week 1','Week 2','Week 3','Week 4']);
-  const sunMap=rowsToDayMapping(sunParsed,['Week 1','Week 2','Week 3','Week 4']);
+  // Load today's schedule
+  function loadTodaySchedule() {
+    const scheduleList = document.getElementById('scheduleList');
+    scheduleList.innerHTML = '';
+    const now = new Date();
+    const day = now.getDay();
+    if (day >=1 && day <=5) {
+      const parsed = parseStoredTimetable('timetable_weekdays');
+      if (!parsed) { scheduleList.innerHTML = '<li>No schedule found for today.</li>'; return; }
+      if (parsed.type === 'table-rows') {
+        const rows = parsed.data;
+        const header = rows[0] || [];
+        const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        let colIndex = header.findIndex(h => String(h).trim().toLowerCase() === dayNames[day].toLowerCase());
+        if (colIndex === -1) colIndex = Math.min(header.length-1, day);
+        let any=false;
+        for(let i=1;i<rows.length;i++){
+          const time = rows[i][0]||'';
+          const subj = rows[i][colIndex]||'';
+          if((subj||'').trim()!==''){ any=true; const li=document.createElement('li'); li.textContent=(time?time+': ':'')+subj; scheduleList.appendChild(li);}
+        }
+        if(!any)scheduleList.innerHTML='<li>No schedule found for today.</li>';
+        return;
+      }
+    }
+    scheduleList.innerHTML='<li>No schedule found for today.</li>';
+  }
 
-  const rows=[];
-  ['Monday','Tuesday','Wednesday','Thursday','Friday'].forEach(d=>{ const arr=weekdaysMap[d]||[]; if(arr.length===0) rows.push([d,'-','No entries']); else arr.forEach(e=>rows.push([d,e[0]||'-',e[1]||'-'])); });
-  ['Week 1','Week 2','Week 3','Week 4'].forEach(wk=>{ const arrS=satMap[wk]||[]; if(arrS.length===0) rows.push(['Saturday - '+wk,'-','No entries']); else arrS.forEach(e=>rows.push(['Saturday - '+wk,e[0]||'-',e[1]||'-'])); });
-  ['Week 1','Week 2','Week 3','Week 4'].forEach(wk=>{ const arrS=sunMap[wk]||[]; if(arrS.length===0) rows.push(['Sunday - '+wk,'-','No entries']); else arrS.forEach(e=>rows.push(['Sunday - '+wk,e[0]||'-',e[1]||'-'])); });
+  // Upcoming deadlines & progress
+  function getNextBacklog(subject){
+    const arr=JSON.parse(localStorage.getItem(subject+'BacklogData'))||[];
+    return arr.find(r=>{ try{return String(r[1]).toLowerCase()!=='yes';}catch(e){return false;} });
+  }
 
-  const table=document.createElement('table'); table.className='weekTable';
-  const thead=document.createElement('thead'); const trh=document.createElement('tr');
-  ['Day','Time','Subject'].forEach(t=>{ const th=document.createElement('th'); th.textContent=t; trh.appendChild(th); }); thead.appendChild(trh); table.appendChild(thead);
-  const tbody=document.createElement('tbody');
-  rows.forEach(r=>{ const tr=document.createElement('tr'); r.forEach(cell=>{ const td=document.createElement('td'); td.textContent=cell; tr.appendChild(td); }); tbody.appendChild(tr); });
-  table.appendChild(tbody); body.innerHTML=''; body.appendChild(table);
-}
+  function loadUpcomingDeadlines(){
+    document.getElementById('nextScience').textContent=getNextBacklog('science')?.[0]||'All completed!';
+    document.getElementById('nextMaths').textContent=getNextBacklog('maths')?.[0]||'All completed!';
+    document.getElementById('nextSSC').textContent=getNextBacklog('ssc')?.[0]||'All completed!';
+  }
 
-// Event bindings
-window.addEventListener('load',()=>{
-  loadTodaySchedule();
-  loadUpcomingDeadlines();
-  calculateProgress();
-  document.getElementById('fullWeekWidget').addEventListener('click',openFullWeekModal);
-  document.getElementById('closeFullWeek').addEventListener('click',closeFullWeekModal);
-});
+  function calculateProgress(){
+    const subjects=['science','maths','ssc'];
+    let completed=0,total=0;
+    subjects.forEach(sub=>{
+      const data=JSON.parse(localStorage.getItem(sub+'BacklogData'))||[];
+      data.forEach(r=>{ total++; try{ if(String(r[1]).toLowerCase()==='yes')completed++;}catch(e){}});
+    });
+    const percent = total===0?0:Math.round((completed/total)*100);
+    document.getElementById('progressBar').style.width=percent+'%';
+    document.getElementById('progressText').textContent=percent+'%';
+  }
+
+  // Full Week modal
+  function openFullWeekModal(){ 
+    document.getElementById('fullWeekModal').style.display='block';
+    populateFullWeek();
+  }
+  function closeFullWeekModal(){ 
+    document.getElementById('fullWeekModal').style.display='none';
+  }
+
+  // Build full week table
+  function populateFullWeek(){
+    const body=document.getElementById('fullWeekBody');
+    body.innerHTML='<p style="opacity:0.8;">Loading schedule...</p>';
+    const weekdaysParsed=parseStoredTimetable('timetable_weekdays');
+    const satParsed=parseStoredTimetable('timetable_saturday');
+    const sunParsed=parseStoredTimetable('timetable_sunday');
+
+    function rowsToDayMapping(parsed,dayNamesMap){
+      const mapping={}; if(!parsed) return mapping;
+      if(parsed.type==='table-rows'){ const rows=parsed.data; const header=rows[0]||[];
+        for(let col=1;col<header.length;col++){ const dayLabel=(dayNamesMap && dayNamesMap[col-1])?dayNamesMap[col-1]:header[col]||('Col '+col); mapping[dayLabel]=mapping[dayLabel]||[]; for(let r=1;r<rows.length;r++){ const time=rows[r][0]||''; const subj=rows[r][col]||''; if((subj||'').trim()!=='') mapping[dayLabel].push([time,subj]);}}
+        return mapping;}
+      if(parsed.type==='object'){ Object.keys(parsed.data).forEach(k=>{const val=parsed.data[k]; if(Array.isArray(val)) mapping[k]=val.map(x=>Array.isArray(x)?x:['',x]);}); return mapping;}
+      return mapping;
+    }
+
+    const weekdaysMap=rowsToDayMapping(weekdaysParsed,['Monday','Tuesday','Wednesday','Thursday','Friday']);
+    const satMap=rowsToDayMapping(satParsed,['Week 1','Week 2','Week 3','Week 4']);
+    const sunMap=rowsToDayMapping(sunParsed,['Week 1','Week 2','Week 3','Week 4']);
+
+    const rows=[];
+    ['Monday','Tuesday','Wednesday','Thursday','Friday'].forEach(d=>{ const arr=weekdaysMap[d]||[]; if(arr.length===0) rows.push([d,'-','No entries']); else arr.forEach(e=>rows.push([d,e[0]||'-',e[1]||'-'])); });
+    ['Week 1','Week 2','Week 3','Week 4'].forEach(wk=>{ const arrS=satMap[wk]||[]; if(arrS.length===0) rows.push(['Saturday - '+wk,'-','No entries']); else arrS.forEach(e=>rows.push(['Saturday - '+wk,e[0]||'-',e[1]||'-'])); });
+    ['Week 1','Week 2','Week 3','Week 4'].forEach(wk=>{ const arrS=sunMap[wk]||[]; if(arrS.length===0) rows.push(['Sunday - '+wk,'-','No entries']); else arrS.forEach(e=>rows.push(['Sunday - '+wk,e[0]||'-',e[1]||'-'])); });
+
+    const table=document.createElement('table'); table.className='weekTable';
+    const thead=document.createElement('thead'); const trh=document.createElement('tr');
+    ['Day','Time','Subject'].forEach(t=>{ const th=document.createElement('th'); th.textContent=t; trh.appendChild(th); }); thead.appendChild(trh); table.appendChild(thead);
+    const tbody=document.createElement('tbody');
+    rows.forEach(r=>{ const tr=document.createElement('tr'); r.forEach(cell=>{ const td=document.createElement('td'); td.textContent=cell; tr.appendChild(td); }); tbody.appendChild(tr); });
+    table.appendChild(tbody); body.innerHTML=''; body.appendChild(table);
+  }
+
+  // Event bindings
+  window.addEventListener('load',()=>{
+    loadTodaySchedule();
+    loadUpcomingDeadlines();
+    calculateProgress();
+    document.getElementById('fullWeekWidget').addEventListener('click',openFullWeekModal);
+    document.getElementById('closeFullWeek').addEventListener('click',closeFullWeekModal);
+  });
 </script>
 
 </body>
