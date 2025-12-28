@@ -1,7 +1,7 @@
 {
   "name": "StudyStream Planner",
   "short_name": "StudyStream",
-  "start_url": "index.html",
+  "start_url": "intro.html",
   "display": "standalone",
   "background_color": "#0f0f0f",
   "theme_color": "#5b86e5",
