@@ -98,12 +98,12 @@
 
   <script>
     setTimeout(() => {
-      document.body.style.animation = "fadeOut 1s ease forwards";
-      setTimeout(() => {
-        // Redirecting to index with a parameter to stop the redirect loop
-        window.location.href = "index.html?fromIntro=true";
-      }, 1000);
-    }, 4000);
+  document.body.style.animation = "fadeOut 1s ease forwards";
+  setTimeout(() => {
+    // Jump to login after animation
+    window.location.href = "login.html"; 
+  }, 1000);
+}, 4000);
   </script>
 </body>
 </html>
