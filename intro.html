@@ -7,7 +7,7 @@
   <style>
     @font-face {
       font-family: 'Poppins';
-      src: url('file:///android_asset/fonts/Poppins-Regular.ttf');
+      src: url('fonts/Poppins-Regular.ttf');
     }
 
     body {
@@ -19,7 +19,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: url('file:///android_asset/images/intro-character.jpg') no-repeat center center/cover;
+      background: url('images/intro-character.jpg') no-repeat center center/cover;
       font-family: 'Poppins', sans-serif;
       color: #facc15;
       animation: fadeIn 1.5s ease-in-out;
@@ -36,7 +36,7 @@
     }
 
     h1 {
-      font-size: 3em; /* reduced from 4em */
+      font-size: 3em; 
       color: #fff;
       text-shadow:
         0 0 8px #000,
@@ -100,7 +100,8 @@
     setTimeout(() => {
       document.body.style.animation = "fadeOut 1s ease forwards";
       setTimeout(() => {
-        window.location.href = "login.html";
+        // Redirecting to index with a parameter to stop the redirect loop
+        window.location.href = "index.html?fromIntro=true";
       }, 1000);
     }, 4000);
   </script>
