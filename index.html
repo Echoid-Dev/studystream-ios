@@ -309,6 +309,14 @@ h1 {
 <div id="overlay"></div>
 
 <script>
+  // --- Launcher Logic: Show Intro on First Visit ---
+  const urlParams = new URLSearchParams(window.location.search);
+  // If the user hasn't seen the intro this session AND isn't coming back FROM the intro
+  if (!sessionStorage.getItem('introSeen') && !urlParams.has('fromIntro')) {
+    sessionStorage.setItem('introSeen', 'true');
+    window.location.href = 'intro.html';
+  }
+
   // --- Service Worker Registration ---
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js')
