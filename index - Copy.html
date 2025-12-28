@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Study Planner Dashboard</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+  background: url('images/home-bg.jpg') no-repeat center center/cover;
+  color: #fff;
+  text-align: center;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+/* title */
+h1 {
+  margin: 25px 10px 15px 10px;
+  font-size: 2.2rem;
+  text-shadow: 2px 2px 12px rgba(0,0,0,0.8);
+  word-wrap: break-word;
+}
+
+/* main buttons */
+.button-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  padding: 10px;
+  margin-top: 20px;
+}
+
+.tile {
+  width: 85%;
+  max-width: 360px;
+  height: 70px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 18px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(0,0,0,0.5);
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.tile i {
+  font-size: 1.5rem;
+  margin-right: 12px;
+}
+
+.tile:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 25px rgba(0,255,255,0.5);
+}
+
+.timetable { background: linear-gradient(135deg,#36d1dc,#5b86e5); }
+.studyhours { background: linear-gradient(135deg,#ff416c,#ff4b2b); }
+.backlog { background: linear-gradient(135deg,#8e2de2,#4a00e0); }
+.healthreport { background: linear-gradient(135deg,#00bfff,#0072ff); }
+.pomodoro { background: linear-gradient(135deg,#ffb347,#ffcc33); color:#222; font-weight:700; }
+.focusMode { background: linear-gradient(135deg,#ffa69e,#861657); }
+
+/* responsive font scaling */
+@media (max-width: 450px) {
+  h1 { font-size: 1.8rem; }
+  .tile {
+    width: 90%;
+    height: 60px;
+    font-size: 0.95rem;
+    border-radius: 12px;
+  }
+  .tile i {
+    font-size: 1.3rem;
+    margin-right: 10px;
+  }
+}
+
+/* Floating 3-dots button */
+#quickMenuBtn {
+  position: fixed;
+  right: 18px;
+  bottom: 20px;
+  background: #222;
+  color: #fff;
+  font-size: 1.6rem;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 15px rgba(0,0,0,0.5);
+  cursor: pointer;
+  transition: transform 0.3s, background 0.3s;
+  z-index: 1001;
+}
+#quickMenuBtn:hover { background: #333; transform: scale(1.1); }
+
+/* Quick panel (slide-in) */
+#quickPanel {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 80%;
+  max-width: 340px;
+  height: 100vh;
+  background: rgba(15,15,15,0.95);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  z-index: 1002;
+  transition: right 0.4s ease;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.6);
+  overflow-y: auto;
+  padding: 15px;
+}
+
+#quickPanel.open { right: 0; }
+
+#overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  z-index: 1000;
+}
+#overlay.show { display: block; }
+
+.quickHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.quickHeader h3 { margin: 0; }
+.quickHeader button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.quickContent {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* widget styles */
+.widget {
+  width: 100%;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.widget h3 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  padding-bottom: 6px;
+}
+
+.widget ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+}
+
+/* progress bar */
+.progress-bar-container {
+  background: rgba(255,255,255,0.3);
+  border-radius: 10px;
+  height: 16px;
+  width: 100%;
+  margin-top: 10px;
+}
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(135deg,#00ff88,#00bfff);
+  border-radius: 10px;
+  transition: width 0.5s ease;
+}
+#progressText {
+  color: #00ff88;
+  font-weight: bold;
+  font-size: 1.8rem;
+  margin-top: 8px;
+}
+
+/* table inside quick panel for full week timetable */
+.weekTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+.weekTable th, .weekTable td {
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 6px;
+  font-size: 0.85rem;
+  text-align: left;
+}
+.weekTable th {
+  background: rgba(255,255,255,0.1);
+}
+</style>
+</head>
+<body>
+<h1>Welcome to Your Study Planner</h1>
+
+<div class="button-container">
+  <div class="tile timetable" onclick="location.href='timetable.html'">
+    📅 <br><i class="fas fa-calendar-alt"></i> <br> Timetable
+  </div>
+
+  <div class="tile studyhours" onclick="location.href='studyhours.html'">
+    📘 <br><i class="fas fa-book"></i> <br> Study Hours
+  </div>
+
+  <div class="tile backlog" onclick="location.href='notes.html'">
+    🧾 <br><i class="fas fa-sticky-note"></i> <br> Backlog
+  </div>
+
+  <div class="tile healthreport" onclick="location.href='about.html'">
+    ❤️ <br><i class="fas fa-heartbeat"></i> <br> Health Report
+  </div>
+
+  <div class="tile pomodoro" onclick="location.href='pomodoro.html'">
+    ⏱️ <br><i class="fas fa-stopwatch"></i> <br> Pomodoro Timer
+  </div>
+
+  <div class="tile focusMode" onclick="location.href='focus.html'">
+    🌿 <br><i class="fas fa-spa"></i> <br> Focus
+  </div>
+</div>
+
+<!-- Floating quick action button -->
+<div id="quickMenuBtn">⋮</div>
+
+<!-- Side quick-action panel -->
+<div id="quickPanel">
+  <div class="quickHeader">
+    <h3>Quick Actions</h3>
+    <button id="closeQuick">✕</button>
+  </div>
+
+  <div class="quickContent">
+    <div class="widget" id="todaySchedule">
+      <h3>Today's Schedule</h3>
+      <ul id="scheduleList"></ul>
+    </div>
+
+    <div class="widget" id="upcomingDeadline">
+      <h3>Upcoming Deadlines</h3>
+      <p><strong>Science:</strong> <span id="nextScience"></span></p>
+      <p><strong>Maths:</strong> <span id="nextMaths"></span></p>
+      <p><strong>Social:</strong> <span id="nextSSC"></span></p>
+    </div>
+
+    <div class="widget" id="studyProgress">
+      <h3>Backlog Completion Progress</h3>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p id="progressText">0%</p>
+    </div>
+
+    <div class="widget fullWeekWidget" id="fullWeekWidget">
+      <h3>📅 Full Week Timetable</h3>
+      <p style="margin:6px 0 0 0; font-size:0.85rem;">Click to expand</p>
+    </div>
+
+    <!-- Full Week Modal -->
+    <div id="fullWeekModal" style="display:none; margin-top:10px;">
+      <h3>Full Week Timetable</h3>
+      <div id="fullWeekBody">
+        <p style="opacity:0.8;">Loading schedule...</p>
+      </div>
+      <button id="closeFullWeek" style="margin-top:10px; padding:5px 10px; cursor:pointer;">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay backdrop -->
+<div id="overlay"></div>
+
+<script>
+  // Quick panel open/close logic
+const quickBtn = document.getElementById("quickMenuBtn");
+const quickPanel = document.getElementById("quickPanel");
+const closeQuick = document.getElementById("closeQuick");
+const overlay = document.getElementById("overlay");
+
+quickBtn.addEventListener("click", () => {
+  quickPanel.classList.add("open");
+  overlay.classList.add("show");
+});
+closeQuick.addEventListener("click", () => {
+  quickPanel.classList.remove("open");
+  overlay.classList.remove("show");
+});
+overlay.addEventListener("click", () => {
+  quickPanel.classList.remove("open");
+  overlay.classList.remove("show");
+});
+
+// ---------- Helpers ----------
+function parseStoredTimetable(key) {
+  const raw = localStorage.getItem(key);
+  if (!raw) return null;
+  try {
+    const data = JSON.parse(raw);
+    if (Array.isArray(data) && data.every(r => Array.isArray(r))) return { type: 'table-rows', data };
+    if (typeof data === 'object') return { type: 'object', data };
+    return { type: 'raw', data };
+  } catch (e) { return { type: 'raw', data: raw }; }
+}
+
+function getWeekOfMonth(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = d.getDate();
+  const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
+  const firstDayIndex = (firstDay.getDay() + 6) % 7;
+  const adjusted = day + firstDayIndex;
+  return Math.min(Math.floor((adjusted - 1) / 7) + 1, 4);
+}
+
+// Load today's schedule
+function loadTodaySchedule() {
+  const scheduleList = document.getElementById('scheduleList');
+  scheduleList.innerHTML = '';
+  const now = new Date();
+  const day = now.getDay();
+  if (day >=1 && day <=5) {
+    const parsed = parseStoredTimetable('timetable_weekdays');
+    if (!parsed) { scheduleList.innerHTML = '<li>No schedule found for today.</li>'; return; }
+    if (parsed.type === 'table-rows') {
+      const rows = parsed.data;
+      const header = rows[0] || [];
+      const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      let colIndex = header.findIndex(h => String(h).trim().toLowerCase() === dayNames[day].toLowerCase());
+      if (colIndex === -1) colIndex = Math.min(header.length-1, day);
+      let any=false;
+      for(let i=1;i<rows.length;i++){
+        const time = rows[i][0]||'';
+        const subj = rows[i][colIndex]||'';
+        if((subj||'').trim()!==''){ any=true; const li=document.createElement('li'); li.textContent=(time?time+': ':'')+subj; scheduleList.appendChild(li);}
+      }
+      if(!any)scheduleList.innerHTML='<li>No schedule found for today.</li>';
+      return;
+    }
+    scheduleList.innerHTML='<li>No schedule found for today.</li>'; return;
+  }
+  scheduleList.innerHTML='<li>No schedule found for today.</li>';
+}
+
+// Upcoming deadlines & progress
+function getNextBacklog(subject){
+  const arr=JSON.parse(localStorage.getItem(subject+'BacklogData'))||[];
+  return arr.find(r=>{ try{return String(r[1]).toLowerCase()!=='yes';}catch(e){return false;} });
+}
+
+function loadUpcomingDeadlines(){
+  document.getElementById('nextScience').textContent=getNextBacklog('science')?.[0]||'All completed!';
+  document.getElementById('nextMaths').textContent=getNextBacklog('maths')?.[0]||'All completed!';
+  document.getElementById('nextSSC').textContent=getNextBacklog('ssc')?.[0]||'All completed!';
+}
+
+function calculateProgress(){
+  const subjects=['science','maths','ssc'];
+  let completed=0,total=0;
+  subjects.forEach(sub=>{
+    const data=JSON.parse(localStorage.getItem(sub+'BacklogData'))||[];
+    data.forEach(r=>{ total++; try{ if(String(r[1]).toLowerCase()==='yes')completed++;}catch(e){}});
+  });
+  const percent = total===0?0:Math.round((completed/total)*100);
+  document.getElementById('progressBar').style.width=percent+'%';
+  document.getElementById('progressText').textContent=percent+'%';
+}
+
+// Full Week modal
+function openFullWeekModal(){ 
+  document.getElementById('fullWeekModal').style.display='block';
+  populateFullWeek();
+}
+function closeFullWeekModal(){ 
+  document.getElementById('fullWeekModal').style.display='none';
+}
+
+// Build full week table
+function populateFullWeek(){
+  const body=document.getElementById('fullWeekBody');
+  body.innerHTML='<p style="opacity:0.8;">Loading schedule...</p>';
+  const weekdaysParsed=parseStoredTimetable('timetable_weekdays');
+  const satParsed=parseStoredTimetable('timetable_saturday');
+  const sunParsed=parseStoredTimetable('timetable_sunday');
+
+  function rowsToDayMapping(parsed,dayNamesMap){
+    const mapping={}; if(!parsed) return mapping;
+    if(parsed.type==='table-rows'){ const rows=parsed.data; const header=rows[0]||[];
+      for(let col=1;col<header.length;col++){ const dayLabel=(dayNamesMap && dayNamesMap[col-1])?dayNamesMap[col-1]:header[col]||('Col '+col); mapping[dayLabel]=mapping[dayLabel]||[]; for(let r=1;r<rows.length;r++){ const time=rows[r][0]||''; const subj=rows[r][col]||''; if((subj||'').trim()!=='') mapping[dayLabel].push([time,subj]);}}
+      return mapping;}
+    if(parsed.type==='object'){ Object.keys(parsed.data).forEach(k=>{const val=parsed.data[k]; if(Array.isArray(val)) mapping[k]=val.map(x=>Array.isArray(x)?x:['',x]);}); return mapping;}
+    return mapping;
+  }
+
+  const weekdaysMap=rowsToDayMapping(weekdaysParsed,['Monday','Tuesday','Wednesday','Thursday','Friday']);
+  const satMap=rowsToDayMapping(satParsed,['Week 1','Week 2','Week 3','Week 4']);
+  const sunMap=rowsToDayMapping(sunParsed,['Week 1','Week 2','Week 3','Week 4']);
+
+  const rows=[];
+  ['Monday','Tuesday','Wednesday','Thursday','Friday'].forEach(d=>{ const arr=weekdaysMap[d]||[]; if(arr.length===0) rows.push([d,'-','No entries']); else arr.forEach(e=>rows.push([d,e[0]||'-',e[1]||'-'])); });
+  ['Week 1','Week 2','Week 3','Week 4'].forEach(wk=>{ const arrS=satMap[wk]||[]; if(arrS.length===0) rows.push(['Saturday - '+wk,'-','No entries']); else arrS.forEach(e=>rows.push(['Saturday - '+wk,e[0]||'-',e[1]||'-'])); });
+  ['Week 1','Week 2','Week 3','Week 4'].forEach(wk=>{ const arrS=sunMap[wk]||[]; if(arrS.length===0) rows.push(['Sunday - '+wk,'-','No entries']); else arrS.forEach(e=>rows.push(['Sunday - '+wk,e[0]||'-',e[1]||'-'])); });
+
+  const table=document.createElement('table'); table.className='weekTable';
+  const thead=document.createElement('thead'); const trh=document.createElement('tr');
+  ['Day','Time','Subject'].forEach(t=>{ const th=document.createElement('th'); th.textContent=t; trh.appendChild(th); }); thead.appendChild(trh); table.appendChild(thead);
+  const tbody=document.createElement('tbody');
+  rows.forEach(r=>{ const tr=document.createElement('tr'); r.forEach(cell=>{ const td=document.createElement('td'); td.textContent=cell; tr.appendChild(td); }); tbody.appendChild(tr); });
+  table.appendChild(tbody); body.innerHTML=''; body.appendChild(table);
+}
+
+// Event bindings
+window.addEventListener('load',()=>{
+  loadTodaySchedule();
+  loadUpcomingDeadlines();
+  calculateProgress();
+  document.getElementById('fullWeekWidget').addEventListener('click',openFullWeekModal);
+  document.getElementById('closeFullWeek').addEventListener('click',closeFullWeekModal);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome - StudyStream</title>
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  background: url('images/home-bg.jpg') no-repeat center center/cover;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Poppins', sans-serif;
+  overflow: hidden;
+  animation: fadeIn 1.5s ease-in-out;
+}
+
+/* Container behind the text */
+.container {
+  background: rgba(0,0,0,0.5); /* semi-transparent black */
+  padding: 30px 50px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 0 50px rgba(0,0,0,0.7);
+}
+
+h1 {
+  font-size: 2.5em; /* smaller text */
+  color: #38bdf8;
+  text-shadow: 
+    0 0 50px #000000,
+    0 0 100px #38bdf8,
+    0 0 150px #38bdf8,
+    0 0 200px #38bdf8;
+  margin: 0;
+  opacity: 0;
+  animation: slideIn 1s ease forwards;
+}
+
+p {
+  margin-top: 20px;
+  color: #cbd5e1;
+  font-size: 1.2em;
+  text-shadow: 
+    0 0 40px #000000,
+    0 0 80px #cbd5e1,
+    0 0 120px #cbd5e1;
+  opacity: 0;
+  animation: fadeUp 1.5s ease forwards 0.5s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; transform: scale(0.95); }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1 id="welcomeText">Welcome!</h1>
+  <p id="message">Preparing your StudyStream dashboard...</p>
+</div>
+
+<script>
+const user = localStorage.getItem("username") || "Guest";
+document.getElementById("welcomeText").textContent = `Welcome, ${user}!`;
+
+// Exit fade before redirect
+setTimeout(() => {
+  document.body.style.animation = "fadeOut 1s ease forwards";
+  setTimeout(() => { window.location.href = "index.html"; }, 1000);
+}, 4000);
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - StudyStream</title>
+    <style>
+        body {
+          margin: 0;
+          height: 100vh;
+          background: url('images/home-bg.jpg') no-repeat center center/cover;
+          font-family: 'Poppins', sans-serif;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          animation: slideIn 1s ease forwards;
+        }
+
+        @keyframes slideIn {
+          from { transform: translateX(-50px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+
+        .container {
+          background: rgba(0, 0, 0, 0.6);
+          padding: 30px;
+          border-radius: 20px;
+          text-align: center;
+          box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+        }
+
+        h1 { color: #38bdf8; margin-bottom: 25px; }
+        input {
+          width: 80%;
+          margin: 10px 0;
+          padding: 10px;
+          border-radius: 10px;
+          border: none;
+          text-align: center;
+          outline: none;
+        }
+
+        button {
+          margin-top: 15px;
+          padding: 10px 25px;
+          border: none;
+          border-radius: 10px;
+          background: #38bdf8;
+          color: white;
+          cursor: pointer;
+          font-size: 1em;
+          transition: 0.3s;
+        }
+
+        button:hover { background: #0ea5e9; transform: scale(1.05); }
+
+        p { margin-top: 15px; color: #cbd5e1; font-size: 0.9em; }
+        a { color: #93c5fd; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Login</h1>
+    <input type="text" id="loginUser" placeholder="Username" />
+    <input type="password" id="loginPass" placeholder="Password" />
+    <button onclick="login()">Login</button>
+    <p>Don’t have an account? <a href="register.html">Register here</a></p>
+</div>
+
+<script>
+    function login() {
+      const user = document.getElementById("loginUser").value.trim();
+      const pass = document.getElementById("loginPass").value.trim();
+
+      const savedUser = localStorage.getItem("username");
+      const savedPass = localStorage.getItem("password");
+
+      if (user === savedUser && pass === savedPass) {
+        localStorage.setItem("loggedIn", "true");
+        window.location.href = "welcome.html";
+      } else {
+        alert("Incorrect username or password. Please register first!");
+      }
+    }
+</script>
+</body>
+</html>

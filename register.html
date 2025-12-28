@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - StudyStream</title>
+    <style>
+        body {
+          margin: 0;
+          height: 100vh;
+          background: url('images/home-bg.jpg') no-repeat center center/cover;
+          font-family: 'Poppins', sans-serif;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          animation: slideIn 1s ease forwards;
+        }
+
+        @keyframes slideIn {
+          from { transform: translateX(50px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+
+        .container {
+          background: rgba(0, 0, 0, 0.6);
+          padding: 30px;
+          border-radius: 20px;
+          text-align: center;
+          box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+        }
+
+        h1 { color: #38bdf8; margin-bottom: 25px; }
+        input {
+          width: 80%;
+          margin: 10px 0;
+          padding: 10px;
+          border-radius: 10px;
+          border: none;
+          text-align: center;
+          outline: none;
+        }
+
+        button {
+          margin-top: 15px;
+          padding: 10px 25px;
+          border: none;
+          border-radius: 10px;
+          background: #38bdf8;
+          color: white;
+          cursor: pointer;
+          font-size: 1em;
+          transition: 0.3s;
+        }
+
+        button:hover { background: #0ea5e9; transform: scale(1.05); }
+
+        p { margin-top: 15px; color: #cbd5e1; font-size: 0.9em; }
+        a { color: #93c5fd; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Register</h1>
+    <input type="text" id="regUser" placeholder="Choose Username" />
+    <input type="password" id="regPass" placeholder="Choose Password" />
+    <button onclick="register()">Register</button>
+    <p>Already have an account? <a href="login.html">Login here</a></p>
+</div>
+
+<script>
+    function register() {
+      const user = document.getElementById("regUser").value.trim();
+      const pass = document.getElementById("regPass").value.trim();
+
+      if (user === "" || pass === "") {
+        alert("Please fill in all fields!");
+        return;
+      }
+
+      localStorage.setItem("username", user);
+      localStorage.setItem("password", pass);
+      alert("Registration successful! Please log in.");
+      window.location.href = "login.html";
+    }
+</script>
+</body>
+</html>

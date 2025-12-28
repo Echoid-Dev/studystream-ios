@@ -1,0 +1,62 @@
+<script>
+const table = document.getElementById("backlogTable");
+const popup = document.createElement("div");
+popup.classList.add("popup");
+document.body.appendChild(popup);
+
+// Popup Yes/No selection
+["Yes","No"].forEach(opt=>{
+  const btn=document.createElement("button");
+  btn.textContent=opt;
+  btn.addEventListener("click", ()=>{
+    if(popup.currentCell){
+      popup.currentCell.textContent=opt;
+      saveTable();
+    }
+    popup.style.display="none";
+  });
+  popup.appendChild(btn);
+});
+
+table.addEventListener("click", e=>{
+  if(e.target.tagName==="TD" && e.target.cellIndex===1){
+    popup.currentCell = e.target;
+    const rect = e.target.getBoundingClientRect();
+    popup.style.top = rect.bottom + "px";
+    popup.style.left = rect.left + "px";
+    popup.style.display = "flex";
+  } else { popup.style.display="none"; }
+});
+
+function saveTable() {
+  const data = Array.from(table.querySelectorAll("tbody tr")).map(row=>
+    Array.from(row.cells).map(cell=>cell.textContent));
+  localStorage.setItem("scienceBacklogData", JSON.stringify(data));
+
+  // Calculate and save progress %
+  const total = data.length;
+  const done = data.filter(row=>row[1]==="Yes").length;
+  const percent = Math.round((done/total)*100);
+  localStorage.setItem("scienceProgress", percent);
+
+  // Change button text to "Saved!!" temporarily
+  const btn = document.getElementById("saveBtn");
+  btn.textContent = "✅ Saved!!";
+  setTimeout(() => { btn.textContent = "💾 Save Progress"; }, 2000);
+}
+
+function loadTable(){
+  const saved = JSON.parse(localStorage.getItem("scienceBacklogData"));
+  if(!saved) return;
+  saved.forEach((row,i)=>{
+    if(table.rows[i+1]){
+      row.forEach((val,j)=>{
+        table.rows[i+1].cells[j].textContent = val;
+      });
+    }
+  });
+}
+
+document.getElementById("saveBtn").addEventListener("click", saveTable);
+window.addEventListener("load", loadTable);
+</script>

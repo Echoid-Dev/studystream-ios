@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Day-Wise Study Hours</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  html, body { height: 100%; margin:0; padding:0; font-family:'Poppins',sans-serif; color:#fff; background:url('images/study-bg.jpg') center center / 140% auto no-repeat; animation:bgPan 40s ease-in-out infinite alternate; }
+  @keyframes bgPan { 0% { background-position:0% center } 50% { background-position:100% center } 100% { background-position:0% center } }
+
+  .page { display:flex; flex-direction:column; align-items:center; padding:18px; gap:12px; height:100vh; box-sizing:border-box; }
+  h1 { margin:6px 0 0; font-size:2.2rem; text-shadow:2px 2px 8px rgba(0,0,0,0.45); }
+  p.lead { margin:6px 0 12px; opacity:0.95; }
+
+  .menu { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+  .menu button { padding:8px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:700; background:linear-gradient(90deg,#f6d365,#fda085); color:#fff; box-shadow:0 6px 18px rgba(0,0,0,0.25); transition:transform .18s, box-shadow .18s; }
+  .menu button:hover { transform:translateY(-3px); box-shadow:0 10px 25px rgba(0,0,0,0.35); }
+
+  .schedule { flex:1 1 auto; width:100%; max-width:1200px; overflow:auto; padding:6px; box-sizing:border-box; display:flex; justify-content:center; }
+  .schedule::-webkit-scrollbar { display:none; }
+  .schedule { scrollbar-width:none; -ms-overflow-style:none; }
+
+  .day { background:rgba(255,255,255,0.12); backdrop-filter:blur(8px); border-radius:14px; padding:14px; width:320px; max-width:36%; box-shadow:0 8px 30px rgba(0,0,0,0.35); transition:transform .22s, box-shadow .22s; display:flex; flex-direction:column; gap:8px; overflow:auto; max-height:calc(100vh - 180px); }
+  .day::-webkit-scrollbar { display:none; }
+  .day { scrollbar-width:none; -ms-overflow-style:none; }
+  .day h2 { margin:0 0 6px; font-size:1.1rem; color:#fff; }
+  .day h2 small { display:block; font-size:0.85rem; color:rgba(255,255,255,0.85); margin-top:6px; }
+
+  .task { padding:8px 10px; border-radius:8px; display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.06); cursor:text; transition:transform .14s, background-color .14s, box-shadow .14s; }
+  .task:hover { transform:scale(1.02); background:rgba(255,255,255,0.12); box-shadow:0 6px 20px rgba(0,0,0,0.25); }
+
+  /* task colors */
+  .lunch { background:#b2f7b2; color:#000; }
+  .homework { background:#ffe066; color:#000; }
+  .leave { background:#ffb366; color:#000; }
+  .backlog { background:#ff8080; color:#000; }
+  .relax { background:#80b3ff; color:#000; }
+  .study { background:#d6b3ff; color:#000; border:2px solid #8c33ff; }
+  .game { background:#80dfff; color:#000; }
+
+  /* bottom buttons */
+  .bottom-buttons { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+
+  #saveStudyBtn { padding:10px 18px; border-radius:10px; border:none; background:linear-gradient(90deg,#36d1dc,#5b86e5); color:#fff; font-weight:700; cursor:pointer; box-shadow:0 12px 30px rgba(0,0,0,0.28); }
+  #saveStudyBtn:hover { transform:translateY(-3px); }
+
+  @media (max-width:980px){ .day{width:300px;max-width:45%} .schedule{gap:12px;padding:10px;} }
+  @media (max-width:680px){ body{background-size:180% auto;animation-duration:60s;} .page{padding:12px;} h1{font-size:1.6rem;} .schedule{flex-direction:column;align-items:center;overflow:auto;} .day{width:92%;max-width:480px;} }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Day-Wise Study Hours</h1>
+  <p class="lead">Your weekly schedule for success</p>
+
+  <!-- Day toggle buttons -->
+  <div class="menu" id="dayButtons"></div>
+
+  <!-- Schedule container -->
+  <div class="schedule" id="schedule"></div>
+
+  <!-- Bottom buttons -->
+  <div class="bottom-buttons">
+    <button id="saveStudyBtn">Save Study Hours</button>
+    <button onclick="location.href='timetable.html'">📅 Timetable</button>
+    <button onclick="location.href='index.html'">🏠 Home</button>
+    <button onclick="location.href='notes.html'">📝 Backlog</button>
+  </div>
+</div>
+
+<script>
+// Default schedule data
+const defaultSchedule = [
+  {day:'Weekday', hours:'Per Day Hrs: 5.5', tasks:[
+    {emoji:'🍽', title:'Lunch & Relax', time:'3:00-4:00 PM', type:'lunch'},
+    {emoji:'✏️', title:'School Homework', time:'4:00-4:50 PM', type:'homework'},
+    {emoji:'🏃', title:'Prepare for Backlog', time:'4:50-5:00 PM', type:'leave'},
+    {emoji:'👨‍🏫', title:'Backlog Time', time:'5:00-6:30 PM', type:'backlog'},
+    {emoji:'🏠', title:'Return Home & Relax', time:'6:30-7:00 PM', type:'relax'},
+    {emoji:'📚', title:'Study Time', time:'7:00 PM-12:30 AM', type:'study'}
+  ]},
+  {day:'Saturday', hours:'Total Hrs: 14.5', tasks:[
+    {emoji:'📚', title:'Study Time', time:'8:00 AM-4:00 PM', type:'study'},
+    {emoji:'✏️', title:'School Homework', time:'4:00-4:50 PM', type:'homework'},
+    {emoji:'🏃', title:'Prepare for Backlog', time:'4:50-5:00 PM', type:'leave'},
+    {emoji:'👨‍🏫', title:'Backlog Time', time:'5:00-6:30 PM', type:'backlog'},
+    {emoji:'🎮', title:'Backlog Time', time:'6:30-7:45 PM', type:'backlog'},
+    {emoji:'📚', title:'Study Time', time:'8:00 PM-2:30 AM', type:'study'}
+  ]},
+  {day:'Sunday', hours:'Total Hrs: 12.5', tasks:[
+    {emoji:'📚', title:'Study Time', time:'8:00 AM-4:00 PM', type:'study'},
+    {emoji:'✏️', title:'School Homework', time:'4:00-4:50 PM', type:'homework'},
+    {emoji:'🏃', title:'Prepare for Backlog', time:'4:50-5:00 PM', type:'leave'},
+    {emoji:'👨‍🏫', title:'Backlog Time', time:'5:00-6:30 PM', type:'backlog'},
+    {emoji:'🎮', title:'Backlog Time', time:'6:30-7:45 PM', type:'backlog'},
+    {emoji:'📚', title:'Study Time', time:'8:00 PM-12:30 AM', type:'study'}
+  ]}
+];
+
+let scheduleData = JSON.parse(localStorage.getItem('studySchedule')) || defaultSchedule;
+const scheduleContainer = document.getElementById('schedule');
+const dayButtonsContainer = document.getElementById('dayButtons');
+const saveStudyBtn = document.getElementById('saveStudyBtn');
+
+// Create day toggle buttons
+scheduleData.forEach((dayObj, index) => {
+  const btn = document.createElement('button');
+  btn.textContent = dayObj.day;
+  btn.onclick = ()=> showDay(index);
+  dayButtonsContainer.appendChild(btn);
+});
+
+// Show only one day
+function showDay(dayIndex){
+  scheduleContainer.innerHTML = '';
+  const dayObj = scheduleData[dayIndex];
+  const dayDiv = document.createElement('div');
+  dayDiv.className = 'day';
+  const header = document.createElement('h2');
+  header.innerHTML = `${dayObj.day} <small>${dayObj.hours}</small>`;
+  dayDiv.appendChild(header);
+  dayObj.tasks.forEach((task,tIndex)=>{
+    const t = document.createElement('div');
+    t.className = `task ${task.type}`;
+    t.contentEditable = true;
+    t.dataset.day = dayIndex;
+    t.dataset.task = tIndex;
+    t.innerText = task.text || `${task.emoji} ${task.title}: ${task.time}`;
+    t.addEventListener('blur', saveSchedule);
+    dayDiv.appendChild(t);
+  });
+  scheduleContainer.appendChild(dayDiv);
+}
+
+// Save function
+function saveSchedule(){
+  document.querySelectorAll('.day').forEach(dayDiv=>{
+    dayDiv.querySelectorAll('.task').forEach(taskDiv=>{
+      const d = taskDiv.dataset.day, t = taskDiv.dataset.task;
+      scheduleData[d].tasks[t].text = taskDiv.innerText;
+    });
+  });
+  localStorage.setItem('studySchedule',JSON.stringify(scheduleData));
+  saveStudyBtn.textContent = 'Saved ✓';
+  setTimeout(()=> saveStudyBtn.textContent='Save Study Hours',1200);
+}
+
+// Event listener for Save button
+saveStudyBtn.addEventListener('click', saveSchedule);
+
+// Show first day by default
+showDay(0);
+</script>
+</body>
+</html>
